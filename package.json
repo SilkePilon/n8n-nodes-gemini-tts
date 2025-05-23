@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-gemini-tts",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "An n8n node to generate text-to-speech using Google Gemini AI",
   "keywords": [
     "n8n-community-node-package",
