@@ -1,0 +1,60 @@
+{
+  "node": "n8n-nodes-gemini-tts.GeminiChatbot",
+  "nodeIdentifier": "n8n-nodes-gemini-tts.geminiChatbot",
+  "version": 1,
+  "icon": "file:geminiChatbot.svg",
+  "categories": ["AI", "Utility"],
+  "input": ["main"],
+  "output": ["main"],
+  "credentials": [
+    {
+      "name": "geminiApi",
+      "required": true
+    }
+  ],
+  "properties": [
+    {
+      "displayName": "Text Prompt",
+      "name": "prompt",
+      "type": "string",
+      "default": "",
+      "placeholder": "Enter your message for the chatbot",
+      "description": "The text message to send to the Gemini chatbot."
+    },
+    {
+      "displayName": "Model Name",
+      "name": "modelName",
+      "type": "options",
+      "options": [
+        {
+          "name": "Gemini 1.5 Flash Preview (Native Audio Dialog)",
+          "value": "models/gemini-1.5-flash-preview-native-audio-dialog"
+        },
+        {
+          "name": "Gemini 1.5 Flash Experimental (Native Audio Thinking Dialog)",
+          "value": "models/gemini-1.5-flash-exp-native-audio-thinking-dialog"
+        }
+      ],
+      "default": "models/gemini-1.5-flash-preview-native-audio-dialog",
+      "description": "Choose the Gemini model for the chatbot interaction."
+    },
+    {
+      "displayName": "Voice Name",
+      "name": "voiceName",
+      "type": "options",
+      "options": [
+        { "name": "Zephyr", "value": "Zephyr" },
+        { "name": "Charon", "value": "Charon" }
+      ],
+      "default": "Zephyr",
+      "description": "Select the voice for the AI's audio response."
+    },
+    {
+      "displayName": "Enable Grounding with Google Search",
+      "name": "enableGrounding",
+      "type": "boolean",
+      "default": false,
+      "description": "Allows the AI to use Google Search to inform its responses."
+    }
+  ]
+}
