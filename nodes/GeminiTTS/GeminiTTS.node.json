@@ -1,0 +1,24 @@
+{
+  "node": "n8n-nodes-gemini-tts.GeminiTTS",
+  "nodeIdentifier": "n8n-nodes-gemini-tts.geminiTTS",
+  "version": 1,
+  "icon": "file:geminiTTS.svg",
+  "categories": ["AI", "Utility"],
+  "input": ["main"],
+  "output": ["main"],
+  "credentials": [
+    {
+      "name": "geminiApi",
+      "required": true
+    }
+  ],
+  "properties": [
+    {
+      "displayName": "Text Prompt",
+      "name": "prompt",
+      "type": "string",
+      "default": "",
+      "description": "The text to be converted to speech by Gemini AI"
+    }
+  ]
+}
