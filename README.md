@@ -41,6 +41,37 @@ These are the basic steps for working with the starter. For detailed guidance on
 
 Refer to our [documentation on creating nodes](https://docs.n8n.io/integrations/creating-nodes/) for detailed information on building your own nodes.
 
+## Available Nodes
+
+### Gemini TTS
+
+**Description:**
+The Gemini TTS node generates speech from text using Google's Gemini AI. It takes a text prompt as input and outputs an audio file along with the original text.
+
+**Credentials:**
+This node uses "Gemini API" credentials. You need to configure a new credential named `geminiApi` with your Google Gemini API Key.
+1. Go to Credentials > New in n8n.
+2. Search for "Gemini API" (or the display name you've set, e.g., "Gemini API Key").
+3. Enter your API Key in the 'API Key' field.
+4. Save the credential.
+
+**Input Properties:**
+*   **Text Prompt (prompt):** The text string you want to convert into speech.
+
+**Output:**
+The node outputs:
+*   **JSON Data:** Contains the original input text under the `text` field (e.g., `{"text": "Hello world"}`).
+*   **Binary Data:** An audio file (typically MP3) containing the generated speech, accessible under the `audio` property.
+
+**Example Usage:**
+1. Add a "Manual" or "Webhook" node to start your workflow and provide an initial text input if needed.
+2. Add the "Gemini TTS" node.
+3. In the Gemini TTS node's properties panel:
+    * Select your configured "Gemini API" credential.
+    * For the "Text Prompt" field, you can enter static text (e.g., "Hello, this is a test.") or use an expression to get text from a previous node (e.g., `{{ $json.inputText }}`).
+4. Connect a node that can handle audio files, like "Write Binary File" to save the audio, or another node that can process/send audio.
+5. Execute the workflow. The Gemini TTS node will output an item with the original text in its JSON part and the audio in its binary part.
+
 ## License
 
 [MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)
