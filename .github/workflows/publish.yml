@@ -3,7 +3,7 @@ name: Publish to npm
 on:
   push:
     branches:
-      - main  # Adjust if your default branch is different
+      - master  # Adjust if your default branch is different
 
 jobs:
   publish:
