@@ -9,18 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Required to commit package.json version update
-      # packages: write # Only needed if publishing to GitHub Packages as well
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Fetch all history for all branches and tags so that git push works correctly
-          fetch-depth: 0
-          # It's good practice to checkout the specific ref that triggered the workflow
-          # for a release, this is the tag associated with the release.
-          # However, we need to commit to the branch (target_commitish),
-          # so we might need to checkout that branch explicitly later if target_commitish is not the current HEAD.
-          # For now, this checkout is fine, the git commands below will manage the branch.
+          ref: ${{ github.event.release.target_commitish }} # Checkout the branch/commit the release targets
+          fetch-depth: 0 # Important to get tags for version extraction if needed elsewhere, good practice
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -29,20 +23,27 @@ jobs:
           registry-url: 'https://registry.npmjs.org/'
 
       - name: Update package.json version and commit
-        env:
-          # GITHUB_TOKEN is automatically available and needed if you were to push to a protected branch
-          # and had branch protection rules that require pull requests.
-          # For direct push, the permissions.contents: write is key.
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env: # Using env for git user details
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+          # GITHUB_TOKEN is implicitly used by git push if the checkout action sets up the remote correctly.
+          # If explicit token is needed for push:
+          # GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # And use in push URL if needed.
         run: |
           VERSION_TAG=${{ github.event.release.tag_name }}
           # Remove 'v' prefix if it exists to get the pure version number
           VERSION=${VERSION_TAG#v}
           
           echo "Release tag: $VERSION_TAG, Extracted version: $VERSION"
+          echo "Target commitish (branch/commit to update): ${{ github.event.release.target_commitish }}"
+          
+          # Configure git (user details are now primarily from env vars)
+          # git config --global user.name "$GIT_AUTHOR_NAME" # Handled by env
+          # git config --global user.email "$GIT_AUTHOR_EMAIL" # Handled by env
           
           # Update package.json using Node.js
-          # Ensure package.json is in the root before running this
           if [ ! -f package.json ]; then
             echo "package.json not found in root. Current directory: $(pwd)"
             ls -la
@@ -51,30 +52,19 @@ jobs:
           node -e "let pkg = require('./package.json'); pkg.version = '$VERSION'; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
           echo "package.json updated to version $VERSION"
           
-          # Configure git
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
-          # Determine the branch to push to. github.event.release.target_commitish is the target (branch or SHA).
-          TARGET_BRANCH=${{ github.event.release.target_commitish }}
-          echo "Target commitish (branch or SHA): $TARGET_BRANCH"
-
-          # Checkout the target branch to commit to.
-          # This is important if the initial checkout was to the tag (detached HEAD).
-          # If TARGET_BRANCH is a SHA, this will be a detached HEAD, but we push to it anyway.
-          # If it's a branch name, it checks out the branch.
-          git checkout $TARGET_BRANCH
-          
           git add package.json
           # Check if there are changes to commit
           if git diff --staged --quiet; then
             echo "No changes to package.json to commit."
           else
-            git commit -m "chore: Bump version to $VERSION_TAG for release [skip ci]"
-            echo "Changes committed. Pushing to $TARGET_BRANCH..."
-            # The push URL should include the token for authentication if needed, but actions/checkout usually sets this up.
-            # Using GITHUB_TOKEN for authentication with the repo.
-            git push https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git HEAD:$TARGET_BRANCH
+            git commit -m "chore: Bump version to $VERSION_TAG [skip ci]"
+            echo "Changes committed."
+            echo "Pushing version update to branch/commit ${{ github.event.release.target_commitish }}"
+            # The `actions/checkout` with `ref: target_commitish` should mean we are on the correct branch/commit.
+            # Pushing to 'origin HEAD:target_commitish' pushes the current commit (HEAD) to the remote branch specified by target_commitish.
+            # This assumes target_commitish is a branch name. If it's a SHA, this push might create a new ref or fail.
+            # However, for releases, target_commitish is typically the branch the tag was made from.
+            git push origin HEAD:${{ github.event.release.target_commitish }}
             echo "Push successful."
           fi
 
