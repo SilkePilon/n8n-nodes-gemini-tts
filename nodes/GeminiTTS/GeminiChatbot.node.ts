@@ -3,6 +3,7 @@ import {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	NodeConnectionType, // Added NodeConnectionType
 } from 'n8n-workflow';
 
 import {
@@ -22,8 +23,8 @@ export class GeminiChatbot implements INodeType {
 		defaults: {
 			name: 'Gemini Chatbot',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: ['main'] as NodeConnectionType[],
+		outputs: ['main'] as NodeConnectionType[],
 		icon: 'file:geminiTTS.svg', // Icon reference
 		credentials: [
 			{
@@ -153,8 +154,7 @@ export class GeminiChatbot implements INodeType {
 					model: modelName,
 					generationConfig: generationConfig, // Apply if any relevant configs are found
 					tools: tools.length > 0 ? tools : undefined,
-				});
-
+				}); // Renaming modelInstance to model here
 
 				// Constructing the request for both text and audio of the AI's response.
 				// The key is how the model 'gemini-X-flash-preview-native-audio-dialog' interprets this.
@@ -167,7 +167,7 @@ export class GeminiChatbot implements INodeType {
 
 				this.logger.info(`Sending request to Gemini: Model=${modelName}, Voice=${voiceName} (applied if supported by model/SDK), Grounding=${enableGrounding}, Prompt Snippet=${prompt.substring(0,50)}...`);
 
-				const result = await model.generateContent(request);
+				const result = await modelInstance.generateContent(request); // Changed to use modelInstance
 				response = result.response;
 
 				this.logger.info(`Gemini API Response for item ${i}: ${JSON.stringify(response, null, 2).substring(0, 500)}...`); // Increased log snippet
@@ -252,9 +252,12 @@ export class GeminiChatbot implements INodeType {
 				}
 
 			} catch (error) {
-				this.logger.error(`Error during Gemini Chatbot execution for item ${i}: ${error.message}. Input prompt: ${prompt.substring(0,100)}...`);
+				// Safely log prompt, checking if it was assigned for the current item
+				const promptForErrorLogging = typeof prompt === 'string' ? prompt.substring(0,100) : 'PROMPT_NOT_ASSIGNED_OR_INVALID';
+				this.logger.error(`Error during Gemini Chatbot execution for item ${i}: ${error.message}. Input prompt snippet: ${promptForErrorLogging}...`);
 				if (this.continueOnFail()) {
-					returnData.push({ json: { error: error.message, details: error.stack, itemIndex: i, textPrompt: prompt }, pairedItem: i });
+					// Ensure prompt is a string before including it in the error output, or provide a placeholder
+					returnData.push({ json: { error: error.message, details: error.stack, itemIndex: i, textPrompt: typeof prompt === 'string' ? prompt : 'PROMPT_NOT_ASSIGNED_OR_INVALID' }, pairedItem: i });
 					continue;
 				}
 				throw error;
